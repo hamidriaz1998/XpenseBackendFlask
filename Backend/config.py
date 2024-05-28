@@ -6,3 +6,4 @@ base_dir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv('CONNECTION_STRING')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
