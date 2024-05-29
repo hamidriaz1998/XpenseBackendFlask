@@ -1,17 +1,35 @@
-from app import app, db
+from flask import request, jsonify, Blueprint
+from extensions import db
 from Models.User import UserModel
-from flask import request, jsonify
-import bcrypt
+import bcrypt  # for salting and hashing passwords
+from sqlalchemy.exc import IntegrityError # for handling unique constraint violation
 
-@app.route('/user', methods=['POST', 'GET'])
-def user():
-    if request.method == 'POST':
-        data = request.get_json()
-        hash = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
-        user = UserModel(name=data['name'], email=data['email'], password_hash=hash)
+bp = Blueprint('user', __name__)
+
+@bp.route('/signUp', methods=['POST'])
+def sign_up():
+    data = request.get_json()
+    if len(data["password"]) < 6:
+        return jsonify({'message': 'Password must be at least 6 characters long!'}), 400
+    hash = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    user = UserModel(name=data['name'], email=data['email'], password_hash=hash)
+    try:
         db.session.add(user)
         db.session.commit()
-        return jsonify({'message': 'User created!'}), 201
-    elif request.method == 'GET':
-        users = UserModel.query.all()
-        return jsonify([user.to_dict() for user in users])
+    except IntegrityError:
+        return jsonify({'message': 'User already exists!'}), 400
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Internal server error!'}), 500
+    return jsonify({'message': 'User created!'}), 201
+
+@bp.route('/signIn', methods=['POST'])
+def sign_in():
+    data = request.get_json()
+    user = UserModel.query.filter_by(email=data['email']).first()
+    if not user:
+        return jsonify({'message': 'User not found!'}), 404
+    if bcrypt.checkpw(data['password'].encode('utf-8'), user.password_hash.encode('utf-8')):
+        return jsonify({"message": "User logged in successfully", "user": user.to_dict()}), 200
+    else:
+        return jsonify({'message': 'Invalid password!'}), 400
