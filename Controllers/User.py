@@ -14,4 +14,4 @@ def user():
         return jsonify({'message': 'User created!'}), 201
     elif request.method == 'GET':
         users = UserModel.query.all()
-        return jsonify([user.__dict__ for user in users])
+        return jsonify([user.to_dict() for user in users])

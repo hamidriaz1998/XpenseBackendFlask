@@ -8,3 +8,5 @@ class UserModel(db.Model):
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
+    def to_dict(self):
+        return {'id': self.id, 'name': self.name, 'email': self.email}
