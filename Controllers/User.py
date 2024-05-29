@@ -63,3 +63,20 @@ def change_pass():
     except Exception as e:
         print(e)
         return jsonify({'message': 'Internal server error!'}), 500
+
+@bp.route('/update-user', methods=['PUT'])
+def update_user():
+    data = request.get_json()
+    if not all(key in data for key in ('id', 'name', 'email')):
+        return jsonify({'message': 'Invalid request!'}), 400
+    try:
+        user = UserModel.query.filter_by(id=data['id']).first()
+        if not user:
+            return jsonify({'message': 'User not found!'}), 404
+        user.name = data['name']
+        user.email = data['email']
+        db.session.commit()
+        return jsonify({'message': 'User updated!'}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Internal server error!'}), 500
