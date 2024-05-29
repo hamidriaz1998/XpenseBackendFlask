@@ -1,15 +1,15 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+from extensions import db, migrate
 from config import Config
 
-app = Flask(__name__)
-app.config.from_object(Config)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
+    db.init_app(app)
+    migrate.init_app(app, db)
+    return app
 
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-
-from Controllers.User import *
 
 if __name__ == '__main__':
+    app = create_app()
     app.run(debug=True)
