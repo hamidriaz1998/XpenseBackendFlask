@@ -9,5 +9,7 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+from Controllers.User import *
+
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
