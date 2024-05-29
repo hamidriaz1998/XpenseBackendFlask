@@ -80,3 +80,25 @@ def update_user():
     except Exception as e:
         print(e)
         return jsonify({'message': 'Internal server error!'}), 500
+
+@bp.route('/delete-user/<int:id>', methods=['DELETE'])
+def delete_user(id:int):
+    try:
+        user = UserModel.query.filter_by(id=id).first()
+        if not user:
+            return jsonify({'message': 'User not found!'}), 404
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'message': 'User deleted!'}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Internal server error!'}), 500
+    
+@bp.route('/get-users', methods=['GET'])
+def get_users():
+    try:
+        users = UserModel.query.all()
+        return jsonify([user.to_dict() for user in users]), 200
+    except Exception as e:
+        print(e)
+        return jsonify({'message': 'Internal server error!'}), 500
