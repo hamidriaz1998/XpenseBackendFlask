@@ -3,6 +3,7 @@ from extensions import db
 from Models.User import UserModel
 from extensions import bcrypt
 from sqlalchemy.exc import IntegrityError # for handling unique constraint violation
+from flask_jwt_extended import jwt_required,create_access_token, get_jwt_identity
 
 bp = Blueprint('user', __name__)
 
@@ -35,7 +36,7 @@ def sign_in():
         if not user:
             return jsonify({'message': 'User not found!'}), 404
         if user.check_password(data['password']):
-            return jsonify({"message": "User logged in successfully", "user": user.to_dict()}), 200
+            return jsonify({'token': create_access_token(identity=user.id)}), 200
         else:
             return jsonify({'message': 'Invalid password!'}), 400
     except Exception as e:
@@ -43,19 +44,20 @@ def sign_in():
         return jsonify({'message': 'Internal server error!'}), 500
 
 @bp.route('/changePass', methods=['POST'])
+@jwt_required()
 def change_pass():
     data = request.get_json()
-    if not all(key in data for key in ('email', 'oldPassword', 'newPassword')):
+    id = get_jwt_identity()
+    if not all(key in data for key in ('oldPassword', 'newPassword')):
         return jsonify({'message': 'Invalid request!'}), 400
     try:
-        user = UserModel.query.filter_by(email=data['email']).first()
+        user = UserModel.query.filter_by(id=id).first()
         if not user:
             return jsonify({'message': 'User not found!'}), 404
-        if bcrypt.checkpw(data['oldPassword'].encode('utf-8'), user.password_hash.encode('utf-8')):
+        if user.check_password(data['oldPassword']):
             if len(data["newPassword"]) < 6:
                 return jsonify({'message': 'Password must be at least 6 characters long!'}), 400
-            hash = bcrypt.hashpw(data['newPassword'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            user.password_hash = hash
+            user.set_password(data['newPassword'])
             db.session.commit()
             return jsonify({'message': 'Password changed!'}), 200
         else:
@@ -65,12 +67,14 @@ def change_pass():
         return jsonify({'message': 'Internal server error!'}), 500
 
 @bp.route('/update-user', methods=['PUT'])
+@jwt_required()
 def update_user():
     data = request.get_json()
-    if not all(key in data for key in ('id', 'name', 'email')):
+    id = get_jwt_identity()
+    if not all(key in data for key in ('name', 'email')):
         return jsonify({'message': 'Invalid request!'}), 400
     try:
-        user = UserModel.query.filter_by(id=data['id']).first()
+        user = UserModel.query.filter_by(id=id).first()
         if not user:
             return jsonify({'message': 'User not found!'}), 404
         user.name = data['name']
