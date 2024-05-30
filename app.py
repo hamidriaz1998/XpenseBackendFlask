@@ -3,6 +3,8 @@ from extensions import db, migrate, bcrypt, jwt
 from config import Config
 import importlib
 import Controllers
+import os
+from dotenv import load_dotenv
 
 def register_blueprints(app):
     for module_name in Controllers.__all__:
@@ -18,6 +20,8 @@ def create_app():
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     jwt.init_app(app)
+    # setup jwt key
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
     # register blueprints
     register_blueprints(app)
 
@@ -25,5 +29,7 @@ def create_app():
 
 
 if __name__ == '__main__':
+    if os.getenv('FLASK_ENV') == 'development':
+        load_dotenv()
     app = create_app()
     app.run(debug=True)

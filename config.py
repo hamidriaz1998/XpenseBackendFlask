@@ -1,7 +1,9 @@
-from dotenv import load_dotenv
 import os
 
-load_dotenv()
+if os.getenv('FLASK_ENV') == 'development':
+    from dotenv import load_dotenv
+    load_dotenv()
+
 base_dir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
