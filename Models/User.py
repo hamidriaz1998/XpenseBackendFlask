@@ -1,4 +1,5 @@
 from app import db
+from extensions import bcrypt
 
 class UserModel(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -10,3 +11,7 @@ class UserModel(db.Model):
         return '<User {}>'.format(self.username)
     def to_dict(self):
         return {'id': self.id, 'name': self.name, 'email': self.email}
+    def set_password(self, password):
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password_hash, password)
